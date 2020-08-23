@@ -23,7 +23,27 @@ public class PromotionsController {
 	PromotionServiceImpl promotionService;
 
 	@RequestMapping(method = RequestMethod.POST, value = "/promotion")
-	public @ResponseBody ResponseEntity<Promotion> addProduct(@RequestBody Promotion promotion) {
+	public @ResponseBody ResponseEntity addProduct(@RequestBody Promotion promotion) {
+		if (promotion.getPromoCode() == null) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Promocode is Mandatory");
+		}
+
+		if (promotion.getDiscountType() == null) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("DiscountType is Mandatory");
+		} else if (!"fixed".equalsIgnoreCase(promotion.getDiscountType())
+				&& !"percentage".equalsIgnoreCase(promotion.getDiscountType())) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body("DiscountType has to be either fixed or percentage only");
+		}
+
+		if (promotion.getCodeCriteria() == null) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Code Criteria is Mandatory");
+		}
+
+		if (promotion.getDiscountPrice() == 0 && promotion.getDiscountPercentage() == 0) {
+			return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+					.body("Either DiscountPercentage or DiscountPrice must be grater than 0");
+		}
 		Promotion createdPromotion = promotionService.addPromotion(promotion);
 		return ResponseEntity.status(HttpStatus.OK).body(createdPromotion);
 	}
@@ -33,13 +53,12 @@ public class PromotionsController {
 		return promotionService.viewPromotions();
 	}
 
-	
 	@RequestMapping(method = RequestMethod.DELETE, value = "/promotion/{promoCode}")
 	public @ResponseBody ResponseEntity<String> deletePromotion(@PathVariable String promoCode) {
 		try {
 			promotionService.deletePromotion(promoCode);
 		} catch (Exception e) {
-			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("PromoCode Not Found");
 		}
 		return ResponseEntity.status(HttpStatus.OK).build();
 	}
@@ -51,7 +70,7 @@ public class PromotionsController {
 		} catch (Exception e) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
 		}
-		return ResponseEntity.status(HttpStatus.OK).build();
+		return ResponseEntity.status(HttpStatus.OK).body("PromoCode Not Found");
 	}
 
 }
